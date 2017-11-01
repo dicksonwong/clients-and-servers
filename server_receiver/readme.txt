@@ -1,0 +1,1 @@
+A basic server that makes connections with up to 4 clients and receives messages from them.
