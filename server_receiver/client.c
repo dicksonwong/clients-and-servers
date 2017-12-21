@@ -1,6 +1,6 @@
 /* client.c
  * Author: Dickson Wong
- * Date: November 2, 2017
+ * Date: December 21, 2017
  * 
  * A simple client that simply connects to a server and continues to write
  * messages to it.
