@@ -5,7 +5,7 @@
  * A simple client that simply connects to a server and continues to write
  * messages to it.
  * 
- * Usage: ./client.exe HOST_NAME PORT_NO
+ * Usage: ./client.exe PORT_NO HOST_NAME
  * 
  * */
 
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 	}
  
 	/* Get the port number of the server from arguments */
-    port_number = atoi(argv[2]);
+    port_number = atoi(argv[1]);
     
     /* Attempt to open a socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -48,10 +48,10 @@ int main(int argc, char *argv[])
 	}
 
 	/* Attempt to get host information from name provided */
-    server = gethostbyname(argv[1]);
+    server = gethostbyname(argv[2]);
     
     if (server == NULL) {
-        printf("main: host going by name: %s does not exist", argv[1]);
+        printf("main: host going by name: %s does not exist", argv[2]);
         exit(1);
     }
     

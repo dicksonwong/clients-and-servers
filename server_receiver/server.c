@@ -1,10 +1,11 @@
 /* server.c
  * Author: Dickson Wong
- * Last Updated: November 1, 2017
+ * Last Updated: December 21, 2017
  * 
  * 
  * A simple server using socket that establishes connections with up to 
- * four clients and simply prints them all out.
+ * four clients and simply prints them all out.  The HOST_NAME of this server
+ * will be localhost.
  * 
  * Usage: ./server.exe PORT_NO SERVER_NAME
  * 
@@ -192,7 +193,7 @@ int main(int argc, char *argv[])
 	
 	/* Attempt to bind address to socket */
 	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		printf("main: bind failed\n");
+		printf("main: bind socket to %d failed\n", port_number);
 		exit(1);
 	}
 	
