@@ -1,7 +1,6 @@
 /* server.c
  * Author: Dickson Wong
- * Last Updated: December 21, 2017
- * 
+ * Last Updated: December 31, 2017
  * 
  * A simple server using socket that establishes connections with up to 
  * four clients and receives messages.  Server will write the messages to the 
@@ -171,11 +170,10 @@ void *handle_client(void *args) {
     pthread_mutex_lock(&client_table_lock);
     
     /* Remove client node from the list */
-    printf("ending connection of: %d; result: %d\n", 
-			cli_node.id, 
-			remove_client(cli_node.id));
-			
-	/* Unlock the table of clients */
+    printf("ending connection with: %d\n", cli_node.id);
+    printf("result : %d\n", remove_client(cli_node.id));
+    
+   	/* Unlock the table of clients */
 	printf("succesfully removed; unlocking table\n");
 	pthread_mutex_unlock(&client_table_lock);
 }

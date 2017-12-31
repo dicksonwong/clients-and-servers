@@ -1,9 +1,9 @@
 /* client.c
  * Author: Dickson Wong
- * Date: December 21, 2017
+ * Date: December 31, 2017
  * 
  * A simple client that simply connects to a server and continues to write
- * messages to it.
+ * messages to it until disconnection.
  * 
  * Usage: ./client.exe PORT_NO HOST_NAME
  * 
