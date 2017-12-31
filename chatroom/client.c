@@ -20,6 +20,48 @@
 #define BUFFER_LEN 256
 #define MESSAGE_LEN (BUFFER_LEN - 1)
 
+#define CLI_NAME_BUFFER_LEN 30
+#define CLI_NAME_LEN (CLI_NAME_BUFFER_LEN - 1)
+
+/* Clears the buffer */
+void clear_buffer(char *buffer) 
+{
+	bzero((char *) buffer, BUFFER_LEN);
+}
+
+/* Gets a name from the user and stores it in cli_name */
+void get_username(char *cli_name) {
+	
+	if (cli_name) {
+		/* Prompt client to enter a name */
+		printf("Please enter a name: ");
+		
+		/* Get a name from the user */
+		bzero((char *) cli_name, CLI_NAME_BUFFER_LEN);
+		fgets(cli_name, CLI_NAME_BUFFER_LEN, stdin);
+		
+		/* Remove the newline character in name */
+		cli_name[strcspn(cli_name, "\n")] = '\0';
+		
+		/* Removes any extra characters from stdin */
+		fflush(stdin);
+	}
+}
+	
+/* Interface with the client as specified in args; handles input from the user
+ * and writes it to the server; return 0 upon disconnection; on any instance of
+ * error occuring, return -1 
+ 
+void *handle_server_messages(void *args) {
+	char buffer[BUFFER_LEN];
+	clear_buffer(buffer);
+	
+	struct client_node cli_node = *(struct client_node *)args;
+	int n;
+	int client_connected = 1;
+}
+*/
+
 int main(int argc, char *argv[])
 {	
     int sockfd, port_number, n;
@@ -28,8 +70,9 @@ int main(int argc, char *argv[])
     struct hostent *server;
 
     char buffer[BUFFER_LEN];
+    char cli_name[CLI_NAME_BUFFER_LEN];
     char *msg;
-    int write_messages = 1;
+    int connected = 1;
     
     /* Check that both hostname and port are provided */
     if (argc < 3) {
@@ -72,20 +115,25 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
     
-    while(write_messages)    
+    /* Get a usename from the user */
+    get_username(cli_name);
+	
+	/* Pass on the username to the server */
+	n = write(sockfd, cli_name, strlen(cli_name));
+	
+	/* Continue to read and write messages while connected */
+    while(connected)    
     {
+
 		/* Get message from user and write to server */
 		printf("Enter a message: ");
 		bzero(buffer, BUFFER_LEN);
 		msg = fgets(buffer, MESSAGE_LEN, stdin);
 		
-		/* Do not write to sockfd if the message was null */
-		if (msg == NULL) {
-			printf("no bytes were received from stdin\n");
-		} else {
+		/* Write non-NULL msg to sockfd */
+		if (msg != NULL) {
 			
 			n = write(sockfd, buffer, strlen(buffer));
-			printf("%d bytes were written to sockfd\n", n);
 		
 			if (n < 0) {
 				printf("main: cannot write to server\n");
