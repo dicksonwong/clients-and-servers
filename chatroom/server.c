@@ -56,6 +56,8 @@ int add_client(struct client_node *new_client)
 	/* If no node at head of list, then make new client node the head */
 	if (head == NULL) {
 		head = new_client;
+		num_clients++;
+		return 1;
 	}
 	
 	struct client_node *current = head;
@@ -112,6 +114,21 @@ void clear_buffer(char *buffer)
 	bzero((char *) buffer, BUFFER_LEN);
 }
 
+/* Write message to all clients, given message from specified client */
+void write_to_clients(char *name, char *msg) {
+	struct client_node *current = head;
+	int i = 0;
+	
+	while (current != NULL) {
+		write(current->sock_fd, name, strlen(name));
+		write(current->sock_fd, " says: ", 7);
+		write(current->sock_fd, msg, strlen(msg));
+		write(current->sock_fd, "\n", 2);
+		current = current->next;
+		
+	}
+}
+
 /* Interface with the client as specified in args; prints all messages
  * received from client; return 0 upon disconnection; on any instance of
  * error occuring, return -1 */
@@ -126,7 +143,7 @@ void *handle_client(void *args) {
 	/* Wait for the client to identify their name; if no name is received or
 	 * client disconnects, then disconnect the client */
 	if ((n = read(cli_node.sock_fd, cli_node.name, CLI_NAME_LEN)) <= 0) {
-		printf("Client did not identify themselves; disconnecting client...");
+		printf("Client did not identify themselves; disconnecting client...\n");
 		client_connected = 0;
 	}
 	
@@ -136,24 +153,18 @@ void *handle_client(void *args) {
 		printf("%d bytes were read\n", n);
 		
 		/* User must have disconnected */
-		if (n <= 0) {
+		if ((n <= 0) || (strncmp(buffer, ".DISCONNECT", EXIT_MESSAGE_LEN) == 0)) {
 			client_connected = 0;
 		} else {
 			
 			/* lock serve_client lock */
 			pthread_mutex_lock(&client_serve_lock);
 
-			/* Client sent a disconnect message */
-			if (strncmp(buffer, ".DISCONNECT", EXIT_MESSAGE_LEN) == 0) 
-			{
-				client_connected = 0;
-			}
-		
 			/* Print message from client */
-			else 
-			{
-				printf("%s says: %s\n", cli_node.name, buffer);
-			}
+			printf("%s says: %s\n", cli_node.name, buffer);
+			
+			/* Write to all clients */
+			write_to_clients(cli_node.name, buffer);
 			
 			/* unlock serve client lock */
 			pthread_mutex_unlock(&client_serve_lock);
@@ -184,6 +195,7 @@ void *handle_client(void *args) {
 int handle_new_connection(int sockfd) 
 {
 	int cli_sockfd, cli_len;
+	int rc = 0;
 	struct client_node cli_node;
     struct sockaddr_in cli_addr;
     pthread_t cli_thread;
@@ -192,11 +204,11 @@ int handle_new_connection(int sockfd)
     cli_sockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &cli_len);
     if (cli_sockfd < 0) {
 		printf("handle_new_connection: error on accept\n");
-		return 0;
+		return rc;
 	}
 	
 	if (num_clients >= MAX_CLIENTS) {
-		return 0;
+		return rc;
 	}
 	
 	printf("Locking table and adding new client\n");
@@ -208,9 +220,6 @@ int handle_new_connection(int sockfd)
 	cli_node.id = current_id;
 	cli_node.sock_fd = cli_sockfd;
 	cli_node.next = NULL;
-		
-	/* Unlock the table lock */
-	pthread_mutex_unlock(&client_table_lock);
 	
 	/* Attempt to add a new client to the table */
 	if (add_client((struct client_node *)&cli_node) > 0) {
@@ -218,9 +227,14 @@ int handle_new_connection(int sockfd)
 		/* Spawn another thread to handle the client */
 		pthread_create(&cli_thread, NULL, (void *)handle_client, (void *)&cli_node);
 		//detach
+		rc = 1;
 	}
+			
+	printf("handle_new_connection; rc value: %d\n", rc);
+	/* Unlock the table lock */
+	pthread_mutex_unlock(&client_table_lock);
 		
-	return 1;	
+	return rc;	
 }
 	
 int main(int argc, char *argv[])

@@ -16,6 +16,7 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <unistd.h>
+#include <pthread.h>
 
 #define BUFFER_LEN 256
 #define MESSAGE_LEN (BUFFER_LEN - 1)
@@ -48,19 +49,28 @@ void get_username(char *cli_name) {
 	}
 }
 	
-/* Interface with the client as specified in args; handles input from the user
- * and writes it to the server; return 0 upon disconnection; on any instance of
- * error occuring, return -1 
- 
-void *handle_server_messages(void *args) {
+void *handle_server(void *args) {
 	char buffer[BUFFER_LEN];
 	clear_buffer(buffer);
 	
-	struct client_node cli_node = *(struct client_node *)args;
+	int sockfd = *((int *)args);
 	int n;
-	int client_connected = 1;
+	int connected = 1;
+	
+	/* Read messages coming in from the server while we are still connected */
+	while (connected) {
+		n = read(sockfd, buffer, MESSAGE_LEN);
+		
+		/* Return when the server has disconnected */
+		if (n <= 0) {
+			connected = 0;
+		} else {
+			printf(buffer);
+			clear_buffer(buffer);
+		}
+	}
+			
 }
-*/
 
 int main(int argc, char *argv[])
 {	
@@ -73,6 +83,7 @@ int main(int argc, char *argv[])
     char cli_name[CLI_NAME_BUFFER_LEN];
     char *msg;
     int connected = 1;
+    pthread_t server_thread;
     
     /* Check that both hostname and port are provided */
     if (argc < 3) {
@@ -121,6 +132,9 @@ int main(int argc, char *argv[])
 	/* Pass on the username to the server */
 	n = write(sockfd, cli_name, strlen(cli_name));
 	
+	/* Spawn another thread to read messages coming in from server */
+	pthread_create(&server_thread, NULL, (void *)handle_server, (void *)&sockfd);
+	
 	/* Continue to read and write messages while connected */
     while(connected)    
     {
@@ -134,7 +148,8 @@ int main(int argc, char *argv[])
 		if (msg != NULL) {
 			
 			n = write(sockfd, buffer, strlen(buffer));
-		
+			bzero(buffer, BUFFER_LEN);
+			
 			if (n < 0) {
 				printf("main: cannot write to server\n");
 				exit(1);
