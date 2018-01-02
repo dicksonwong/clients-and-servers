@@ -61,10 +61,12 @@ int add_client(struct client_node *new_client)
 	}
 	
 	struct client_node *current = head;
+	int i = 0;
 	
 	/* Locate the end of the list and add the new client */
-	while (current->next != NULL) {
+	while ((current->next) != NULL) {
 		current = current->next;
+
 	}
 	current->next = new_client;
 	
@@ -101,8 +103,10 @@ int remove_client(int id)
 	 * join prev and current.next */
 	if (prev == NULL) {
 		head = current->next;
+		free(head);
 	} else {
 		prev->next = current->next;
+		free(current);
 	}
 	rc = 1;
 	return rc;
@@ -125,7 +129,6 @@ void write_to_clients(char *name, char *msg) {
 		write(current->sock_fd, msg, strlen(msg));
 		write(current->sock_fd, "\n", 2);
 		current = current->next;
-		
 	}
 }
 
@@ -137,8 +140,10 @@ void *handle_client(void *args) {
 	clear_buffer(buffer);
 	
 	struct client_node cli_node = *(struct client_node *)args;
+	struct client_node *current = head;
 	int n;
 	int client_connected = 1;
+	int i = 0;
 	
 	/* Wait for the client to identify their name; if no name is received or
 	 * client disconnects, then disconnect the client */
@@ -196,7 +201,8 @@ int handle_new_connection(int sockfd)
 {
 	int cli_sockfd, cli_len;
 	int rc = 0;
-	struct client_node cli_node;
+	struct client_node *cli_node;
+	
     struct sockaddr_in cli_addr;
     pthread_t cli_thread;
     
@@ -215,17 +221,25 @@ int handle_new_connection(int sockfd)
 	/* Lock the table of clients */
 	pthread_mutex_lock(&client_table_lock);
 	
-	/* Add new client information */
+	/* Create new client node and add new client information */
+	cli_node = malloc(sizeof(struct client_node));
+	
+	/* Exit if no memory can be allocated */
+	if (cli_node == NULL) {
+		printf("handle_new_connection: malloc failed\n");
+		return rc;
+	}
+	
 	current_id++;
-	cli_node.id = current_id;
-	cli_node.sock_fd = cli_sockfd;
-	cli_node.next = NULL;
+	cli_node->id = current_id;
+	cli_node->sock_fd = cli_sockfd;
+	cli_node->next = NULL;
 	
 	/* Attempt to add a new client to the table */
-	if (add_client((struct client_node *)&cli_node) > 0) {
+	if (add_client(cli_node) > 0) {
 		
 		/* Spawn another thread to handle the client */
-		pthread_create(&cli_thread, NULL, (void *)handle_client, (void *)&cli_node);
+		pthread_create(&cli_thread, NULL, (void *)handle_client, (void *)cli_node);
 		//detach
 		rc = 1;
 	}
