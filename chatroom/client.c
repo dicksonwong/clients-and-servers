@@ -1,6 +1,6 @@
 /* client.c
  * Author: Dickson Wong
- * Date: December 31, 2017
+ * Date: Jan 1, 2018
  * 
  * A simple client that simply connects to a server and continues to write
  * messages to it until disconnection.
@@ -135,12 +135,13 @@ int main(int argc, char *argv[])
 	/* Spawn another thread to read messages coming in from server */
 	pthread_create(&server_thread, NULL, (void *)handle_server, (void *)&sockfd);
 	
+	printf("Enter a message: ");
+			
 	/* Continue to read and write messages while connected */
     while(connected)    
     {
 
 		/* Get message from user and write to server */
-		printf("Enter a message: ");
 		bzero(buffer, BUFFER_LEN);
 		msg = fgets(buffer, MESSAGE_LEN, stdin);
 		

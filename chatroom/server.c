@@ -1,6 +1,6 @@
 /* server.c
  * Author: Dickson Wong
- * Last Updated: December 31, 2017
+ * Last Updated: Jan 1, 2018
  * 
  * A simple server using socket that establishes connections with up to 
  * four clients and receives messages.  Server will write the messages to the 
@@ -85,7 +85,7 @@ int remove_client(int id)
 		return rc;
 	}
 	
-	struct client_node *prev;
+	struct client_node *prev = NULL;
 	struct client_node *current = head;
 	
 	/* Find the node whose id matches the given id */
@@ -102,8 +102,9 @@ int remove_client(int id)
 	/* If prev was NULL, then node to be removed is head; otherwise, 
 	 * join prev and current.next */
 	if (prev == NULL) {
-		head = current->next;
+		current = current->next;
 		free(head);
+		head = current;
 	} else {
 		prev->next = current->next;
 		free(current);
