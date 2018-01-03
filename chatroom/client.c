@@ -30,8 +30,20 @@ void clear_buffer(char *buffer)
 	bzero((char *) buffer, BUFFER_LEN);
 }
 
+/* Reads and removes non-EOF characters (including newline) in stdin.
+int clear_input() {
+	char buffer[BUFFER_LEN]; 
+	
+	while (fgets(buffer, BUFFER_LEN, stdin) != NULL) {
+		fgets(buffer, BUFFER_LEN, stdin);
+	}
+}
+*/
+
 /* Gets a name from the user and stores it in cli_name */
 void get_username(char *cli_name) {
+	
+	int n;
 	
 	if (cli_name) {
 		/* Prompt client to enter a name */
@@ -42,10 +54,12 @@ void get_username(char *cli_name) {
 		fgets(cli_name, CLI_NAME_BUFFER_LEN, stdin);
 		
 		/* Remove the newline character in name */
-		cli_name[strcspn(cli_name, "\n")] = '\0';
+		if ((n = strcspn(cli_name, "\n")) < CLI_NAME_BUFFER_LEN) {
+			cli_name[n] = '\0';
+		}
 		
 		/* Removes any extra characters from stdin */
-		fflush(stdin);
+		clear_input();
 	}
 }
 	
@@ -130,7 +144,7 @@ int main(int argc, char *argv[])
     get_username(cli_name);
 	
 	/* Pass on the username to the server */
-	n = write(sockfd, cli_name, strlen(cli_name));
+	n = write(sockfd, cli_name, CLI_NAME_LEN);
 	
 	/* Spawn another thread to read messages coming in from server */
 	pthread_create(&server_thread, NULL, (void *)handle_server, (void *)&sockfd);
