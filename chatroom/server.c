@@ -102,15 +102,18 @@ int remove_client(int id)
 	/* If prev was NULL, then node to be removed is head; otherwise, 
 	 * join prev and current.next */
 	if (prev == NULL) {
-		current = current->next;
-		free(head);
-		head = current;
+		head = head->next;
 	} else {
 		prev->next = current->next;
-		free(current);
 	}
-	rc = 1;
-	return rc;
+	
+	/* Free the memory allocated for the node to be removed */
+	free(current);
+	
+	/* Decrease the number of clients connect */
+	num_clients--;
+	
+	return 1;
 }
 	
 /* Clears the buffer by replacing all characters by zeros */
