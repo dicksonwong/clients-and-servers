@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     
     /* Check that both hostname and port are provided */
     if (argc < 3) {
-		printf("main: client needs both hostname and port\n");
+		printf("USAGE: client PORT_NO HOSTNAME\n");
 		exit(1);
 	}
  
@@ -145,9 +145,15 @@ int main(int argc, char *argv[])
 		bzero(buffer, BUFFER_LEN);
 		msg = fgets(buffer, MESSAGE_LEN, stdin);
 		
+		/* Remove the newline character entered by the user */
+		msg[strcspn(msg, "\n")] = '\0';
+		
+		/* Print client's message back to client */
+		printf("%s says: %s\n",cli_name, msg);
+		
 		/* Write non-NULL msg to sockfd */
 		if (msg != NULL) {
-			
+
 			n = write(sockfd, buffer, strlen(buffer));
 			bzero(buffer, BUFFER_LEN);
 			

@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
     
 	/* Check that both a name and a port number are provided */
 	if (argc < 3) {
-		printf("main: server requires both name and port number.\n");
+		printf("usage: server PORT_NO SERVER_NAME\n");
 		exit(1);
 	}
 	
